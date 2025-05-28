@@ -348,10 +348,13 @@ class ChooseParametersPage(tk.Frame):
         missing = []
         # Validate date format YYYY-MM-DD
         date_valid = False
+        date_is_future = False
         try:
             if date:
-                datetime.strptime(date, "%Y-%m-%d")
+                date_obj = datetime.strptime(date, "%Y-%m-%d")
                 date_valid = True
+                if date_obj.date() > datetime.now().date():
+                    date_is_future = True
         except ValueError:
             date_valid = False
 
@@ -371,6 +374,9 @@ class ChooseParametersPage(tk.Frame):
             missing.append("ημερομηνία")
         elif not date_valid:
             ErrorMessageCreator.show_error("Σφάλμα", "Η ημερομηνία πρέπει να είναι στη μορφή YYYY-MM-DD.")
+            return
+        elif not date_is_future:
+            ErrorMessageCreator.show_error("Σφάλμα", "Η ημερομηνία πρέπει να είναι μεταγενέστερη της σημερινής.")
             return
 
         if not time:
