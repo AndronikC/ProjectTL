@@ -1,0 +1,80 @@
+[
+    {
+        "user": "student@gmail.com",
+        "message": "Ο φοιτητής student@gmail.com έκλεισε το μάθημα στις 2025-06-01 19:00",
+        "read": true,
+        "timestamp": "2025-05-27 00:20:41"
+    },
+    {
+        "user": "prof@gmail.com",
+        "message": "Ο φοιτητής student@gmail.com έκλεισε το μάθημα στις 2025-06-01 19:00",
+        "read": true,
+        "timestamp": "2025-05-27 00:20:41"
+    },
+    {
+        "user": "student@gmail.com",
+        "message": "Νέο μήνυμα στην ομάδα Ομάδα 1",
+        "read": true,
+        "timestamp": "2025-05-27 00:25:02"
+    },
+    {
+        "user": "prof@gmail.com",
+        "message": "Νέο μήνυμα στην ομάδα Ομάδα 1",
+        "read": true,
+        "timestamp": "2025-05-27 00:26:50"
+    },
+    {
+        "user": "prof@gmail.com",
+        "message": "Ο φοιτητής student@gmail.com έκλεισε το μάθημα στις 2025-06-01 19:00",
+        "read": true,
+        "timestamp": "2025-05-27 00:27:01"
+    },
+    {
+        "user": "student@gmail.com",
+        "message": "Νέο μήνυμα στην ομάδα Ομάδα 1",
+        "read": true,
+        "timestamp": "2025-05-27 00:32:46"
+    },
+    {
+        "user": "student@gmail.com",
+        "message": "Νέο μήνυμα στην ομάδα Ομάδα 1",
+        "read": true,
+        "timestamp": "2025-05-27 00:35:40"
+    },
+    {
+        "user": "student@gmail.com",
+        "message": "Προστέθηκε νέο μάθημα στις 2025-28-05 13:00",
+        "read": true,
+        "timestamp": "2025-05-27 00:35:56"
+    },
+    {
+        "user": "prof@gmail.com",
+        "message": "Νέο μήνυμα στην ομάδα Ομάδα 1",
+        "read": true,
+        "timestamp": "2025-05-27 00:37:37"
+    },
+    {
+        "user": "prof@gmail.com",
+        "message": "Ο φοιτητής student@gmail.com έκλεισε το μάθημα στις 2025-28-05 13:00",
+        "read": true,
+        "timestamp": "2025-05-27 00:37:47"
+    },
+    {
+        "user": "student@gmail.com",
+        "message": "Νέο μήνυμα στην ομάδα Ομάδα 1",
+        "read": true,
+        "timestamp": "2025-05-27 11:48:12"
+    },
+    {
+        "user": "student@gmail.com",
+        "message": "Προστέθηκε νέο μάθημα στις 2025-29-05 16:00",
+        "read": true,
+        "timestamp": "2025-05-27 11:48:29"
+    },
+    {
+        "user": "prof@gmail.com",
+        "message": "Ο φοιτητής student@gmail.com έκλεισε το μάθημα στις 2025-29-05 16:00",
+        "read": true,
+        "timestamp": "2025-05-27 11:49:10"
+    }
+]
