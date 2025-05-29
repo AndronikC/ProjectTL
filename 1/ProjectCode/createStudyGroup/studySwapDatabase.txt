@@ -9,6 +9,15 @@ CREATE TABLE university (
     name VARCHAR(100) NOT NULL
 );
 
+-- ACADEMIC ID
+CREATE TABLE academic_id (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    academic_id_number VARCHAR(20) NOT NULL UNIQUE,
+    university_id INT NOT NULL,
+    academic_email VARCHAR(100 ) NOT NULL UNIQUE,
+    FOREIGN KEY (university_id) REFERENCES university(id)
+);
+
 -- USERS
 CREATE TABLE user (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -16,8 +25,9 @@ CREATE TABLE user (
     password VARCHAR(100) NOT NULL,
     name VARCHAR(30) NOT NULL,
     lastname VARCHAR(30) NOT NULL,
-    academic_email VARCHAR(100) NOT NULL UNIQUE,
-    university_id INT NOT NULL,
+    academic_email VARCHAR(100) UNIQUE,
+    university_id INT,
+    academic_id_number VARCHAR(10),
     FOREIGN KEY (university_id) REFERENCES university(id)
 );
 
@@ -59,6 +69,17 @@ CREATE TABLE studygroup_member (
     status ENUM('invited', 'accepted', 'declined') DEFAULT 'invited',
     PRIMARY KEY (studygroup_id, user_id),
     FOREIGN KEY (studygroup_id) REFERENCES studygroup(id),
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+
+-- VERIFICATION CODES
+CREATE TABLE verification_code (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    code CHAR(6) NOT NULL, -- 6 digit code
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP GENERATED ALWAYS AS (created_at + INTERVAL 1 MINUTE) STORED,
+    is_active BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (user_id) REFERENCES user(id)
 );
 
@@ -107,17 +128,23 @@ INSERT INTO course (university_id, name, code) VALUES
 (3, 'Anthropology', 'UC-ANTH-210');
 
 -- INSERT USERS (10 users, distributed among universities)
-INSERT INTO user (username, password, name, lastname, academic_email, university_id) VALUES
-('user1', 'pass1', 'Alice', 'Papadopoulos', 'alice@athens.edu', 1),
-('user2', 'pass2', 'Bob', 'Nikolaidis', 'bob@athens.edu', 1),
-('user3', 'pass3', 'Charlie', 'Georgiou', 'charlie@athens.edu', 1),
-('user4', 'pass4', 'Diana', 'Kostopoulou', 'diana@patras.edu', 2),
-('user5', 'pass5', 'Evan', 'Papageorgiou', 'evan@patras.edu', 2),
-('user6', 'pass6', 'Fay', 'Katsaros', 'fay@patras.edu', 2),
-('user7', 'pass7', 'George', 'Manolis', 'george@crete.edu', 3),
-('user8', 'pass8', 'Helen', 'Vlachos', 'helen@crete.edu', 3),
-('user9', 'pass9', 'Irene', 'Papadakis', 'irene@crete.edu', 3),
-('user10', 'pass10', 'John', 'Stavros', 'john@athens.edu', 1);
+INSERT INTO user (username, password, name, lastname, academic_email, university_id, academic_id_number) VALUES
+('user1', 'pass1', 'Alice', 'Papadopoulos', 'alice@athens.edu', 1, '1000000001'),
+('user2', 'pass2', 'Bob', 'Nikolaidis', 'bob@athens.edu', 1, '1000000002'),
+('user3', 'pass3', 'Charlie', 'Georgiou', 'charlie@athens.edu', 1, '1000000003'),
+('user4', 'pass4', 'Diana', 'Kostopoulou', 'diana@patras.edu', 2, '2000000004'),
+('user5', 'pass5', 'Evan', 'Papageorgiou', 'evan@patras.edu', 2, '2000000005'),
+('user6', 'pass6', 'Fay', 'Katsaros', 'fay@patras.edu', 2, '2000000006'),
+('user7', 'pass7', 'George', 'Manolis', 'george@crete.edu', 3, '3000000007'),
+('user8', 'pass8', 'Helen', 'Vlachos', 'helen@crete.edu', 3, '3000000008'),
+('user9', 'pass9', 'Irene', 'Papadakis', 'irene@crete.edu', 3, '3000000009'),
+('user10', 'pass10', 'John', 'Stavros', 'john@athens.edu', 1, '1000000010'),
+-- Users without academic_email, university_id, academic_id_number
+('user11', 'pass11', 'Anna', 'Smith', NULL, NULL, NULL),
+('user12', 'pass12', 'Bill', 'Johnson', NULL, NULL, NULL),
+('user13', 'pass13', 'Cathy', 'Brown', NULL, NULL, NULL),
+('user14', 'pass14', 'David', 'Lee', NULL, NULL, NULL),
+('user15', 'pass15', 'Eva', 'White', NULL, NULL, NULL);
 
 -- ENROLL USERS TO COURSES (example enrollments)
 INSERT INTO user_course (user_id, course_id) VALUES
@@ -131,4 +158,29 @@ INSERT INTO user_course (user_id, course_id) VALUES
 (8, 21), (8, 23), (8, 25),
 (9, 22), (9, 24), (9, 26),
 (10, 1), (10, 5), (10, 9);
+
+-- INSERT 100 academic IDs (1-40 for Athens, 41-70 for Patras, 71-100 for Crete)
+INSERT INTO academic_id (academic_id_number, university_id, academic_email) VALUES
+('1000000001', 1, 'alice@athens.edu'), ('1000000002', 1, 'bob@athens.edu'), ('1000000003', 1, 'charlie@athens.edu'), ('1000000004', 1, 'user4@athens.edu'), ('1000000005', 1, 'user5@athens.edu'),
+('1000000006', 1, 'user6@athens.edu'), ('1000000007', 1, 'user7@athens.edu'), ('1000000008', 1, 'user8@athens.edu'), ('1000000009', 1, 'user9@athens.edu'), ('1000000010', 1, 'john@athens.edu'),
+('1000000011', 1, 'user11@athens.edu'), ('1000000012', 1, 'user12@athens.edu'), ('1000000013', 1, 'user13@athens.edu'), ('1000000014', 1, 'user14@athens.edu'), ('1000000015', 1, 'user15@athens.edu'),
+('1000000016', 1, 'user16@athens.edu'), ('1000000017', 1, 'user17@athens.edu'), ('1000000018', 1, 'user18@athens.edu'), ('1000000019', 1, 'user19@athens.edu'), ('1000000020', 1, 'user20@athens.edu'),
+('1000000021', 1, 'user21@athens.edu'), ('1000000022', 1, 'user22@athens.edu'), ('1000000023', 1, 'user23@athens.edu'), ('1000000024', 1, 'user24@athens.edu'), ('1000000025', 1, 'user25@athens.edu'),
+('1000000026', 1, 'user26@athens.edu'), ('1000000027', 1, 'user27@athens.edu'), ('1000000028', 1, 'user28@athens.edu'), ('1000000029', 1, 'user29@athens.edu'), ('1000000030', 1, 'user30@athens.edu'),
+('1000000031', 1, 'user31@athens.edu'), ('1000000032', 1, 'user32@athens.edu'), ('1000000033', 1, 'user33@athens.edu'), ('1000000034', 1, 'user34@athens.edu'), ('1000000035', 1, 'user35@athens.edu'),
+('1000000036', 1, 'user36@athens.edu'), ('1000000037', 1, 'user37@athens.edu'), ('1000000038', 1, 'user38@athens.edu'), ('1000000039', 1, 'user39@athens.edu'), ('1000000040', 1, 'user40@athens.edu'),
+
+('2000000041', 2, 'diana@patras.edu'), ('2000000042', 2, 'evan@patras.edu'), ('2000000043', 2, 'fay@patras.edu'), ('2000000044', 2, 'user44@patras.edu'), ('2000000045', 2, 'user45@patras.edu'),
+('2000000046', 2, 'user46@patras.edu'), ('2000000047', 2, 'user47@patras.edu'), ('2000000048', 2, 'user48@patras.edu'), ('2000000049', 2, 'user49@patras.edu'), ('2000000050', 2, 'user50@patras.edu'),
+('2000000051', 2, 'user51@patras.edu'), ('2000000052', 2, 'user52@patras.edu'), ('2000000053', 2, 'user53@patras.edu'), ('2000000054', 2, 'user54@patras.edu'), ('2000000055', 2, 'user55@patras.edu'),
+('2000000056', 2, 'user56@patras.edu'), ('2000000057', 2, 'user57@patras.edu'), ('2000000058', 2, 'user58@patras.edu'), ('2000000059', 2, 'user59@patras.edu'), ('2000000060', 2, 'user60@patras.edu'),
+('2000000061', 2, 'user61@patras.edu'), ('2000000062', 2, 'user62@patras.edu'), ('2000000063', 2, 'user63@patras.edu'), ('2000000064', 2, 'user64@patras.edu'), ('2000000065', 2, 'user65@patras.edu'),
+('2000000066', 2, 'user66@patras.edu'), ('2000000067', 2, 'user67@patras.edu'), ('2000000068', 2, 'user68@patras.edu'), ('2000000069', 2, 'user69@patras.edu'), ('2000000070', 2, 'user70@patras.edu'),
+
+('3000000071', 3, 'george@crete.edu'), ('3000000072', 3, 'helen@crete.edu'), ('3000000073', 3, 'irene@crete.edu'), ('3000000074', 3, 'user74@crete.edu'), ('3000000075', 3, 'user75@crete.edu'),
+('3000000076', 3, 'user76@crete.edu'), ('3000000077', 3, 'user77@crete.edu'), ('3000000078', 3, 'user78@crete.edu'), ('3000000079', 3, 'user79@crete.edu'), ('3000000080', 3, 'user80@crete.edu'),
+('3000000081', 3, 'user81@crete.edu'), ('3000000082', 3, 'user82@crete.edu'), ('3000000083', 3, 'user83@crete.edu'), ('3000000084', 3, 'user84@crete.edu'), ('3000000085', 3, 'user85@crete.edu'),
+('3000000086', 3, 'user86@crete.edu'), ('3000000087', 3, 'user87@crete.edu'), ('3000000088', 3, 'user88@crete.edu'), ('3000000089', 3, 'user89@crete.edu'), ('3000000090', 3, 'user90@crete.edu'),
+('3000000091', 3, 'user91@crete.edu'), ('3000000092', 3, 'user92@crete.edu'), ('3000000093', 3, 'user93@crete.edu'), ('3000000094', 3, 'user94@crete.edu'), ('3000000095', 3, 'user95@crete.edu'),
+('3000000096', 3, 'user96@crete.edu'), ('3000000097', 3, 'user97@crete.edu'), ('3000000098', 3, 'user98@crete.edu'), ('3000000099', 3, 'user99@crete.edu'), ('3000000100', 3, 'user100@crete.edu');
 
