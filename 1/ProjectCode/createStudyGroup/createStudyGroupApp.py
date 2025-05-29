@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
-import mysql.connector
+import sqlite3
 import re
 from datetime import datetime
 
@@ -29,33 +29,25 @@ class ErrorMessageCreator:
 
 def get_user_info_from_db(username):
     try:
-        conn = mysql.connector.connect(
-            host="127.0.0.1",
-            user="root",        # Change if needed
-            password="123456",        # Change if needed
-            database="studyswap"
-        )
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM user WHERE username = %s", (username,))
+        conn = sqlite3.connect("study_platform.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Users WHERE first_name = ?", (username,))
         user = cursor.fetchone()
         cursor.close()
         conn.close()
-        return user
+        return dict(user) if user else None
     except Exception as e:
         ErrorMessageCreator.show_error("Σφάλμα Βάσης Δεδομένων", f"Αποτυχία σύνδεσης στη βάση: {e}")
         return None
 
-def get_courses_from_db(university_id):
+def get_courses_from_db(department_id):
     try:
-        conn = mysql.connector.connect(
-            host="127.0.0.1",
-            user="root",        # Change if needed
-            password="123456",  # Change if needed
-            database="studyswap"
-        )
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT name FROM course WHERE university_id = %s", (university_id,))
-        courses = [row["name"] for row in cursor.fetchall()]
+        conn = sqlite3.connect("study_platform.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT title FROM Courses WHERE department_id = ?", (department_id,))
+        courses = [row["title"] for row in cursor.fetchall()]
         cursor.close()
         conn.close()
         return courses
@@ -254,15 +246,11 @@ class ChooseCoursePage(tk.Frame):
         courses = ["Επιλέξτε Μάθημα"]
         if self.logged_in_user and self.logged_in_user.get("university_id"):
             try:
-                conn = mysql.connector.connect(
-                    host="127.0.0.1",
-                    user="root",        # Change if needed
-                    password="123456",  # Change if needed
-                    database="studyswap"
-                )
-                cursor = conn.cursor(dictionary=True)
-                cursor.execute("SELECT name FROM course WHERE university_id = %s", (self.logged_in_user["university_id"],))
-                db_courses = [row["name"] for row in cursor.fetchall()]
+                conn = sqlite3.connect("study_platform.db")
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("SELECT title FROM Courses WHERE department_id = ?", (self.logged_in_user["university_id"],))
+                db_courses = [row["title"] for row in cursor.fetchall()]
                 cursor.close()
                 conn.close()
                 courses.extend(db_courses)
@@ -512,16 +500,12 @@ class InviteUsersPage(tk.Frame):
         else:
             ErrorMessageCreator.show_error("Σφάλμα", "Ο χρήστης έχει ήδη προστεθεί.")
 
-    def user_exists_in_db(self, username):
+    def user_exists_in_db(username):
         try:
-            conn = mysql.connector.connect(
-                host="127.0.0.1",
-                user="root",        # Change if needed
-                password="123456",  # Change if needed
-                database="studyswap"
-            )
+            conn = sqlite3.connect("study_platform.db")
+            conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM user WHERE username = %s", (username,))
+            cursor.execute("SELECT COUNT(*) FROM Users WHERE first_name = ?", (username,))
             exists = cursor.fetchone()[0] > 0
             cursor.close()
             conn.close()
@@ -617,20 +601,15 @@ class StudyGroupCreatorPage(tk.Frame):
         confirm_btn.pack(side="left", padx=14)
 
     def create_study_group(self):
-        # Insert the study group into the database
         try:
-            conn = mysql.connector.connect(
-                host="127.0.0.1",
-                user="root",        # Change if needed
-                password="123456",  # Change if needed
-                database="studyswap"
-            )
-            cursor = conn.cursor(dictionary=True)
+            conn = sqlite3.connect("study_platform.db")
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
 
-            # Get course_id for the selected course name and university
+            # Get course_id for the selected course name and department
             cursor.execute(
-                "SELECT id FROM course WHERE name = %s AND university_id = %s",
-                (self.course, self.logged_in_user["university_id"])
+                "SELECT id FROM Courses WHERE title = ? AND department_id = ?",
+                (self.course, self.logged_in_user["department_id"])
             )
             course_row = cursor.fetchone()
             if not course_row:
@@ -642,7 +621,7 @@ class StudyGroupCreatorPage(tk.Frame):
 
             # Insert study group
             cursor.execute(
-                "INSERT INTO studygroup (course_id, creator_id, max_members, date, time) VALUES (%s, %s, %s, %s, %s)",
+                "INSERT INTO StudyGroups (course_id, creator_id, max_members, date, time) VALUES (?, ?, ?, ?, ?)",
                 (
                     course_id,
                     self.logged_in_user["id"],
@@ -655,17 +634,17 @@ class StudyGroupCreatorPage(tk.Frame):
 
             # Add creator as a member (status 'accepted')
             cursor.execute(
-                "INSERT INTO studygroup_member (studygroup_id, user_id, status) VALUES (%s, %s, %s)",
+                "INSERT INTO StudyGroupMembers (studygroup_id, user_id, status) VALUES (?, ?, ?)",
                 (studygroup_id, self.logged_in_user["id"], "accepted")
             )
 
             # Add invited users as 'invited'
             for username in self.users:
-                cursor.execute("SELECT id FROM user WHERE username = %s", (username,))
+                cursor.execute("SELECT id FROM Users WHERE first_name = ?", (username,))
                 user_row = cursor.fetchone()
                 if user_row:
                     cursor.execute(
-                        "INSERT INTO studygroup_member (studygroup_id, user_id, status) VALUES (%s, %s, %s)",
+                        "INSERT INTO StudyGroupMembers (studygroup_id, user_id, status) VALUES (?, ?, ?)",
                         (studygroup_id, user_row["id"], "invited")
                     )
             conn.commit()
@@ -675,7 +654,6 @@ class StudyGroupCreatorPage(tk.Frame):
             self.on_confirm()
         except Exception as e:
             ErrorMessageCreator.show_error("Σφάλμα Βάσης Δεδομένων", f"Αποτυχία δημιουργίας ομάδας: {e}")
-
 if __name__ == "__main__":
     # Simulate a logged-in user by setting the username here.
     # To test with a different user, just change the username below.
