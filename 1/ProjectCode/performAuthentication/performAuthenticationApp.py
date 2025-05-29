@@ -37,11 +37,54 @@ class ErrorMessageCreator:
     def show_error(title, message):
         tk.messagebox.showerror(title, message)
 
+class AuthenticationConfirmationPage(tk.Frame):
+    def __init__(self, master):
+        super().__init__(master, bg=BG_COLOR)
+        label = tk.Label(
+            self,
+            text="Επιτυχής Επαλήθευση!",
+            font=("Helvetica", 18, "bold"),
+            bg=BG_COLOR,
+            fg=PRIMARY_COLOR
+        )
+        label.pack(pady=(60, 20))
+
+        info_label = tk.Label(
+            self,
+            text="Έχετε πλέον ταυτοποιηθεί επιτυχώς.",
+            font=("Helvetica", 14),
+            bg=BG_COLOR,
+            fg=TEXT_COLOR
+        )
+        info_label.pack(pady=(10, 30))
+
+        ok_btn = tk.Button(
+            self,
+            text="OK",
+            font=("Helvetica", 13, "bold"),
+            bg=PRIMARY_COLOR,
+            fg="white",
+            activebackground=PRIMARY_ACTIVE,
+            activeforeground="white",
+            bd=0,
+            highlightthickness=0,
+            relief="flat",
+            cursor="hand2",
+            width=20,
+            height=2,
+            command=self.master.destroy  # or any other action you want
+        )
+        ok_btn.pack(pady=10)
+
 class CodeConfirmationPage(tk.Frame):
-    def __init__(self, master, user_id):
+    def __init__(self, master, user_id, academic_id=None, academic_email=None, university_id=None):
         super().__init__(master, bg=BG_COLOR)
         self.master = master
         self.user_id = user_id
+        self.academic_id = academic_id
+        self.academic_email = academic_email
+        self.university_id = university_id
+        self.attempts = 0  # Track failed attempts
 
         label = tk.Label(
             self,
@@ -87,21 +130,51 @@ class CodeConfirmationPage(tk.Frame):
             )
             cursor = conn.cursor(dictionary=True)
             cursor.execute(
-                "SELECT * FROM verification_code WHERE user_id = %s AND code = %s AND is_active = TRUE AND NOW() <= expires_at",
+                "SELECT * FROM verification_code WHERE user_id = %s AND code = %s AND NOW() <= expires_at",
                 (self.user_id, code)
             )
             row = cursor.fetchone()
             if row:
-                # Optionally, deactivate the code after successful use
+                # Update user table with academic_email, university_id, academic_id_number
+                if self.academic_email and self.university_id and self.academic_id:
+                    cursor.execute(
+                        "UPDATE user SET academic_email = %s, university_id = %s, academic_id_number = %s WHERE id = %s",
+                        (self.academic_email, self.university_id, self.academic_id, self.user_id)
+                    )
+                    conn.commit()
                 cursor.execute(
                     "UPDATE verification_code SET is_active = FALSE WHERE id = %s",
                     (row["id"],)
                 )
                 conn.commit()
-                tk.messagebox.showinfo("Επιτυχία", "Ο κωδικός επαληθεύτηκε επιτυχώς!")
-                # You can proceed to the next step/page here
+                self.master.current_frame.destroy()
+                self.master.current_frame = AuthenticationConfirmationPage(self.master)
+                self.master.current_frame.pack(expand=True, fill="both")
             else:
+                self.attempts += 1
                 ErrorMessageCreator.show_error("Σφάλμα", "Ο κωδικός δεν είναι έγκυρος ή έχει λήξει.")
+                cursor.execute(
+                    "UPDATE verification_code SET is_active = FALSE WHERE user_id = %s AND NOW() <= expires_at",
+                    (self.user_id,)
+                )
+                conn.commit()
+                cursor.execute("SELECT academic_email FROM user WHERE id = %s", (self.user_id,))
+                user_row = cursor.fetchone()
+                if user_row and user_row["academic_email"]:
+                    EmailHandler.send_verification_code(user_row["academic_email"])
+                self.code_entry.delete(0, tk.END)
+                if self.attempts >= 3:
+                    # Remove academic_email, university_id, academic_id_number from user table and close app
+                    cursor.execute(
+                        "UPDATE user SET academic_email = NULL, university_id = NULL, academic_id_number = NULL WHERE id = %s",
+                        (self.user_id,)
+                    )
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
+                    tk.messagebox.showerror("Αποτυχία Επαλήθευσης", "Υπερβήκατε το όριο προσπαθειών. Τα στοιχεία σας διαγράφηκαν. Η εφαρμογή θα κλείσει.")
+                    self.master.destroy()
+                    return
             cursor.close()
             conn.close()
         except Exception as e:
@@ -181,6 +254,18 @@ class AuthenticationPage(tk.Frame):
                 database="studyswap"
             )
             cursor = conn.cursor(dictionary=True)
+            # Check if academic_id_number is already used by any user
+            cursor.execute(
+                "SELECT id FROM user WHERE academic_id_number = %s",
+                (academic_id,)
+            )
+            already_used = cursor.fetchone()
+            if already_used:
+                ErrorMessageCreator.show_error("Σφάλμα", "Αυτός ο Αριθμός Ακαδημαϊκής Ταυτότητας έχει ήδη χρησιμοποιηθεί από άλλον χρήστη.")
+                cursor.close()
+                conn.close()
+                return
+
             # Get academic_id info
             cursor.execute(
                 "SELECT academic_id.university_id, university.name, academic_id.academic_email FROM academic_id JOIN university ON academic_id.university_id = university.id WHERE academic_id.academic_id_number = %s",
