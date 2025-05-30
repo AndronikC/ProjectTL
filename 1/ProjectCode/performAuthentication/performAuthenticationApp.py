@@ -14,24 +14,6 @@ PRIMARY_COLOR = "#4078c0"
 PRIMARY_ACTIVE = "#5fa8d3"
 TEXT_COLOR = "#222f3e"
 
-def get_user_info_from_db(username):
-    try:
-        conn = mysql.connector.connect(
-            host="127.0.0.1",
-            user="root",        # Change if needed
-            password="123456",  # Change if needed
-            database="studyswap"
-        )
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM user WHERE username = %s", (username,))
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        return user
-    except Exception as e:
-        tk.messagebox.showerror("Σφάλμα Βάσης Δεδομένων", f"Αποτυχία σύνδεσης στη βάση: {e}")
-        return None
-
 class ErrorMessageCreator:
     @staticmethod
     def show_error(title, message):
@@ -116,6 +98,12 @@ class CodeConfirmationPage(tk.Frame):
         )
         confirm_btn.pack(pady=10)
 
+    def show_authentication_confirmation_page(self):
+        if hasattr(self.master, "current_frame") and self.master.current_frame:
+            self.master.current_frame.destroy()
+        self.master.current_frame = AuthenticationConfirmationPage(self.master)
+        self.master.current_frame.pack(expand=True, fill="both")
+
     def confirm_code(self):
         code = self.code_entry.get().strip()
         if not (code.isdigit() and len(code) == 6):
@@ -147,9 +135,8 @@ class CodeConfirmationPage(tk.Frame):
                     (row["id"],)
                 )
                 conn.commit()
-                self.master.current_frame.destroy()
-                self.master.current_frame = AuthenticationConfirmationPage(self.master)
-                self.master.current_frame.pack(expand=True, fill="both")
+                # Show authentication confirmation page using the new method
+                self.show_authentication_confirmation_page()
             else:
                 self.attempts += 1
                 ErrorMessageCreator.show_error("Σφάλμα", "Ο κωδικός δεν είναι έγκυρος ή έχει λήξει.")
@@ -240,6 +227,12 @@ class AuthenticationPage(tk.Frame):
             )
             user_label.pack(pady=(15, 0))
 
+    def show_code_confirmation_page(self, user_id, academic_id=None, academic_email=None, university_id=None):
+        if hasattr(self.master, "current_frame") and self.master.current_frame:
+            self.master.current_frame.destroy()
+        self.master.current_frame = CodeConfirmationPage(self.master, user_id, academic_id, academic_email, university_id)
+        self.master.current_frame.pack(expand=True, fill="both")
+
     def confirm_id(self):
         academic_id = self.id_entry.get().strip()
         if not (academic_id.isdigit() and len(academic_id) == 10):
@@ -281,10 +274,8 @@ class AuthenticationPage(tk.Frame):
                 conn.commit()
                 # Send verification code to academic email
                 EmailHandler.send_verification_code(row["academic_email"])
-                # Show code confirmation page
-                self.master.current_frame.destroy()
-                self.master.current_frame = CodeConfirmationPage(self.master, self.logged_in_user["id"])
-                self.master.current_frame.pack(expand=True, fill="both")
+                # Show code confirmation page using the new method
+                self.show_code_confirmation_page(self.logged_in_user["id"])
             else:
                 ErrorMessageCreator.show_error("Σφάλμα", "Ο Αριθμός Ακαδημαϊκής Ταυτότητας δεν βρέθηκε στη βάση δεδομένων.")
             cursor.close()
@@ -306,7 +297,7 @@ class SuccessRegistrationPage(tk.Tk):
         # Simulate logged-in user
         self.logged_in_user = None
         if logged_in_username:
-            self.logged_in_user = get_user_info_from_db(logged_in_username)
+            self.logged_in_user = self.get_user_info_from_db(logged_in_username)
 
         self.current_frame = None
         self.show_success_registration()
@@ -369,12 +360,31 @@ class SuccessRegistrationPage(tk.Tk):
                 anchor="center"
             )
             user_label.pack(pady=(15, 0))
-    
+
     def show_authentication_page(self):
         if self.current_frame:
             self.current_frame.destroy()
         self.current_frame = AuthenticationPage(self, logged_in_user=self.logged_in_user)
         self.current_frame.pack(expand=True, fill="both")
+
+    @staticmethod
+    def get_user_info_from_db(username):
+        try:
+            conn = mysql.connector.connect(
+                host="127.0.0.1",
+                user="root",        # Change if needed
+                password="123456",  # Change if needed
+                database="studyswap"
+            )
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM user WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return user
+        except Exception as e:
+            tk.messagebox.showerror("Σφάλμα Βάσης Δεδομένων", f"Αποτυχία σύνδεσης στη βάση: {e}")
+            return None
 
 class EmailHandler:
     @staticmethod
