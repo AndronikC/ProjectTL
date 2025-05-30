@@ -27,42 +27,6 @@ class ErrorMessageCreator:
     def show_error(title, message):
         messagebox.showerror(title, message)
 
-def get_user_info_from_db(username):
-    try:
-        conn = mysql.connector.connect(
-            host="127.0.0.1",
-            user="root",        # Change if needed
-            password="123456",        # Change if needed
-            database="studyswap"
-        )
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM user WHERE username = %s", (username,))
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        return user
-    except Exception as e:
-        ErrorMessageCreator.show_error("Σφάλμα Βάσης Δεδομένων", f"Αποτυχία σύνδεσης στη βάση: {e}")
-        return None
-
-def get_courses_from_db(university_id):
-    try:
-        conn = mysql.connector.connect(
-            host="127.0.0.1",
-            user="root",        # Change if needed
-            password="123456",  # Change if needed
-            database="studyswap"
-        )
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT name FROM course WHERE university_id = %s", (university_id,))
-        courses = [row["name"] for row in cursor.fetchall()]
-        cursor.close()
-        conn.close()
-        return courses
-    except Exception as e:
-        ErrorMessageCreator.show_error("Σφάλμα Βάσης Δεδομένων", f"Αποτυχία λήψης μαθημάτων: {e}")
-        return []
-
 class HomePage(tk.Tk):
     def __init__(self, logged_in_username=None):
         super().__init__()
@@ -76,7 +40,7 @@ class HomePage(tk.Tk):
         self.logo_img = None
         self.logged_in_user = None
         if logged_in_username:
-            self.logged_in_user = get_user_info_from_db(logged_in_username)
+            self.logged_in_user = self.get_user_info_from_db(logged_in_username)
         self.button_style = {
             "font": ("Helvetica", 12, "bold"),
             "bg": PRIMARY_COLOR,
@@ -159,6 +123,25 @@ class HomePage(tk.Tk):
 
         frame.pack(expand=True, fill="both")
         # --- End MainMenuPage logic ---
+
+    @staticmethod
+    def get_user_info_from_db(username):
+        try:
+            conn = mysql.connector.connect(
+                host="127.0.0.1",
+                user="root",        # Change if needed
+                password="123456",        # Change if needed
+                database="studyswap"
+            )
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM user WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return user
+        except Exception as e:
+            ErrorMessageCreator.show_error("Σφάλμα Βάσης Δεδομένων", f"Αποτυχία σύνδεσης στη βάση: {e}")
+            return None
 
 class ChooseCoursePage(tk.Frame):
     def __init__(self, master, logged_in_user=None):

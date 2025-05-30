@@ -14,24 +14,6 @@ PRIMARY_COLOR = "#4078c0"
 PRIMARY_ACTIVE = "#5fa8d3"
 TEXT_COLOR = "#222f3e"
 
-def get_user_info_from_db(username):
-    try:
-        conn = mysql.connector.connect(
-            host="127.0.0.1",
-            user="root",        # Change if needed
-            password="123456",  # Change if needed
-            database="studyswap"
-        )
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM user WHERE username = %s", (username,))
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        return user
-    except Exception as e:
-        tk.messagebox.showerror("Σφάλμα Βάσης Δεδομένων", f"Αποτυχία σύνδεσης στη βάση: {e}")
-        return None
-
 class ErrorMessageCreator:
     @staticmethod
     def show_error(title, message):
@@ -315,7 +297,7 @@ class SuccessRegistrationPage(tk.Tk):
         # Simulate logged-in user
         self.logged_in_user = None
         if logged_in_username:
-            self.logged_in_user = get_user_info_from_db(logged_in_username)
+            self.logged_in_user = self.get_user_info_from_db(logged_in_username)
 
         self.current_frame = None
         self.show_success_registration()
@@ -384,6 +366,25 @@ class SuccessRegistrationPage(tk.Tk):
             self.current_frame.destroy()
         self.current_frame = AuthenticationPage(self, logged_in_user=self.logged_in_user)
         self.current_frame.pack(expand=True, fill="both")
+
+    @staticmethod
+    def get_user_info_from_db(username):
+        try:
+            conn = mysql.connector.connect(
+                host="127.0.0.1",
+                user="root",        # Change if needed
+                password="123456",  # Change if needed
+                database="studyswap"
+            )
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM user WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return user
+        except Exception as e:
+            tk.messagebox.showerror("Σφάλμα Βάσης Δεδομένων", f"Αποτυχία σύνδεσης στη βάση: {e}")
+            return None
 
 class EmailHandler:
     @staticmethod
