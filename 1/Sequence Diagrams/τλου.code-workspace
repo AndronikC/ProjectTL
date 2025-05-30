@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../Domain Models"
+		},
+		{
+			"path": "../Robustness Diagrams"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../Use-Case Diagrams"
+		}
+	]
+}
