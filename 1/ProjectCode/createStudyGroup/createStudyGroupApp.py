@@ -103,71 +103,33 @@ class HomePage(tk.Tk):
         }
         self.show_home()
 
-    def make_rounded_button(self, parent, **kwargs):
-        btn = tk.Button(parent, **self.rounded_button_style, **kwargs)
-        btn.configure(
-            padx=10, pady=5
-        )
-        return btn
-
     def show_home(self):
         if self.current_frame:
             self.current_frame.destroy()
-        self.current_frame = MainMenuPage(self, self.logged_in_user)
-        self.current_frame.pack(expand=True, fill="both")
-
-    def show_choose_course(self):
-        if self.current_frame:
-            self.current_frame.destroy()
-        self.current_frame = ChooseCoursePage(self, self.logged_in_user)
-        self.current_frame.pack(expand=True, fill="both")
-
-    def show_choose_parameters(self, chosen_course):
-        if self.current_frame:
-            self.current_frame.destroy()
-        self.current_frame = ChooseParametersPage(self, chosen_course, self.logged_in_user)
-        self.current_frame.pack(expand=True, fill="both")
-
-    def show_invite_users(self, group_parameters):
-        if self.current_frame:
-            self.current_frame.destroy()
-        self.current_frame = InviteUsersPage(self, group_parameters, self.logged_in_user)
-        self.current_frame.pack(expand=True, fill="both")
-
-    def show_study_group_creator_page(self, group_parameters, invited_users):
-        if self.current_frame:
-            self.current_frame.destroy()
-        self.current_frame = StudyGroupCreatorPage(
-            self,
-            group_parameters["course"],
-            group_parameters,
-            invited_users,
-            on_confirm=self.show_home,
-            on_cancel=self.show_home,
-            logged_in_user=self.logged_in_user
-        )
-        self.current_frame.pack(expand=True, fill="both")
-
-class MainMenuPage(tk.Frame):
-    def __init__(self, master, logged_in_user=None):
-        super().__init__(master, bg=BG_COLOR)
-        self.master = master
-        self.logged_in_user = logged_in_user
+        # --- Begin MainMenuPage logic here ---
+        frame = tk.Frame(self, bg=BG_COLOR)
+        self.current_frame = frame
 
         # Add logo at the top
         logo_path = os.path.join(os.path.dirname(__file__), "StudySwap_logo.png")
         try:
             img = Image.open(logo_path)
             img = img.resize((220, 80), Image.LANCZOS)
-            self.master.logo_img = ImageTk.PhotoImage(img)
-            logo_label = tk.Label(self, image=self.master.logo_img, bg=BG_COLOR)
+            self.logo_img = ImageTk.PhotoImage(img)
+            logo_label = tk.Label(frame, image=self.logo_img, bg=BG_COLOR)
             logo_label.pack(pady=(18, 10))
         except Exception as e:
-            logo_label = tk.Label(self, text="StudySwap", font=("Helvetica", 20, "bold"), bg=BG_COLOR, fg=PRIMARY_COLOR)
+            logo_label = tk.Label(frame, text="StudySwap", font=("Helvetica", 20, "bold"), bg=BG_COLOR, fg=PRIMARY_COLOR)
             logo_label.pack(pady=(18, 10))
 
+        def show_choose_course():
+            if self.current_frame:
+                self.current_frame.destroy()
+            self.current_frame = ChooseCoursePage(self, self.logged_in_user)
+            self.current_frame.pack(expand=True, fill="both")
+
         button_labels = [
-            ("Δημιουργία Ομάδας Μελέτης", self.master.show_choose_course),
+            ("Δημιουργία Ομάδας Μελέτης", show_choose_course),
             ("Αναζήτηση Ομάδας Μελέτης", None),
             ("Επεξεργασία Προφίλ", None),
             ("Συνδρομή", None),
@@ -175,17 +137,18 @@ class MainMenuPage(tk.Frame):
         ]
 
         for label, command in button_labels:
-            button = self.master.make_rounded_button(
-                self,
+            button = tk.Button(
+                frame,
                 text=label,
-                command=command
-            ) if command else self.master.make_rounded_button(self, text=label)
+                **self.rounded_button_style,
+                command=command if command else None
+            )
             button.pack(pady=12)
 
         # Optionally show logged-in user at the top right
         if self.logged_in_user:
             user_label = tk.Label(
-                self,
+                frame,
                 text=f"Συνδεδεμένος ως: {self.logged_in_user.get('name', '')} {self.logged_in_user.get('lastname', '')}",
                 font=("Helvetica", 10),
                 bg=BG_COLOR,
@@ -193,6 +156,9 @@ class MainMenuPage(tk.Frame):
                 anchor="e"
             )
             user_label.pack(anchor="ne", padx=10, pady=(5, 0))
+
+        frame.pack(expand=True, fill="both")
+        # --- End MainMenuPage logic ---
 
 class ChooseCoursePage(tk.Frame):
     def __init__(self, master, logged_in_user=None):
@@ -246,7 +212,7 @@ class ChooseCoursePage(tk.Frame):
             cursor="hand2",
             width=12,
             height=2,
-            command=self.confirm_course
+            command=self.show_choose_parameters
         )
         confirm_btn.pack(side="left", padx=14)
 
@@ -270,11 +236,14 @@ class ChooseCoursePage(tk.Frame):
                 ErrorMessageCreator.show_error("Σφάλμα Βάσης Δεδομένων", f"Αποτυχία λήψης μαθημάτων: {e}")
         return courses
 
-    def confirm_course(self):
+    def show_choose_parameters(self):
         if self.selected_course.get() == "Επιλέξτε Μάθημα":
             ErrorMessageCreator.show_error("Σφάλμα", "Παρακαλώ επιλέξτε μάθημα πριν συνεχίσετε.")
             return
-        self.master.show_choose_parameters(self.selected_course.get())
+        if self.master.current_frame:
+            self.master.current_frame.destroy()
+        self.master.current_frame = ChooseParametersPage(self.master, self.selected_course.get(), self.logged_in_user)
+        self.master.current_frame.pack(expand=True, fill="both")
 
 class ChooseParametersPage(tk.Frame):
     def __init__(self, master, chosen_course, logged_in_user=None):
@@ -337,11 +306,11 @@ class ChooseParametersPage(tk.Frame):
             cursor="hand2",
             width=12,
             height=2,
-            command=self.confirm_parameters
+            command=self.show_invite_users
         )
         confirm_btn.pack(side="left", padx=14)
 
-    def confirm_parameters(self):
+    def show_invite_users(self):
         date = self.date_entry.get().strip()
         time = self.time_entry.get().strip()
         max_people = self.max_people.get()
@@ -401,7 +370,10 @@ class ChooseParametersPage(tk.Frame):
             "date": date,
             "time": time
         }
-        self.master.show_invite_users(group_parameters)
+        if self.master.current_frame:
+            self.master.current_frame.destroy()
+        self.master.current_frame = InviteUsersPage(self.master, group_parameters, self.logged_in_user)
+        self.master.current_frame.pack(expand=True, fill="both")
 
 class InviteUsersPage(tk.Frame):
     def __init__(self, master, group_parameters, logged_in_user=None):
@@ -530,7 +502,7 @@ class InviteUsersPage(tk.Frame):
             ErrorMessageCreator.show_error("Σφάλμα Βάσης Δεδομένων", f"Αποτυχία ελέγχου χρήστη: {e}")
             return False
 
-    def confirm_invites(self):
+    def show_study_group_creator_page(self):
         if not self.invited_users:
             ErrorMessageCreator.show_error("Σφάλμα", "Παρακαλώ προσθέστε τουλάχιστον έναν χρήστη για πρόσκληση.")
             return
@@ -545,11 +517,36 @@ class InviteUsersPage(tk.Frame):
                 "Οι παρακάτω χρήστες δεν βρέθηκαν στη βάση δεδομένων: " + ", ".join(not_found)
             )
             return
-        self.master.show_study_group_creator_page(self.group_parameters, self.invited_users)
+        if self.master.current_frame:
+            self.master.current_frame.destroy()
+        self.master.current_frame = StudyGroupCreatorPage(
+            self.master,
+            self.group_parameters["course"],
+            self.group_parameters,
+            self.invited_users,
+            on_confirm=self.master.show_home,
+            on_cancel=self.master.show_home,
+            logged_in_user=self.logged_in_user
+        )
+        self.master.current_frame.pack(expand=True, fill="both")
+
+    def confirm_invites(self):
+        self.show_study_group_creator_page()
 
     def skip_invites(self):
         self.invited_users = []
-        self.master.show_study_group_creator_page(self.group_parameters, self.invited_users)
+        if self.master.current_frame:
+            self.master.current_frame.destroy()
+        self.master.current_frame = StudyGroupCreatorPage(
+            self.master,
+            self.group_parameters["course"],
+            self.group_parameters,
+            self.invited_users,
+            on_confirm=self.master.show_home,
+            on_cancel=self.master.show_home,
+            logged_in_user=self.logged_in_user
+        )
+        self.master.current_frame.pack(expand=True, fill="both")
 
 class StudyGroupCreatorPage(tk.Frame):
     def __init__(self, parent, course, parameters, users, on_confirm, on_cancel, logged_in_user=None):
