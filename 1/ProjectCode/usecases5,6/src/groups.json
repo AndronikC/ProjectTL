@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "Ομάδα Μαθηματικών",
+    "members": [
+      "geo@gmail.com",
+      "prof@gmail.com"
+    ],
+    "notes": [
+      "Exams_Spring_25.pdf",
+      {
+        "filename": "Exams_Spring_25.pdf",
+        "filepath": "C:/Users/georg/OneDrive/Υπολογιστής/Exams_Spring_25.pdf"
+      }
+    ],
+    "lessons": [
+      "2024-04-08 20:00",
+      "2024-07-08 19:00",
+      "2025-08-03 20:00"
+    ],
+    "messages": [
+      {
+        "from": "prof@gmail.com",
+        "text": "asdasdasdas"
+      },
+      {
+        "from": "prof@gmail.com",
+        "text": "jkgggkkdas"
+      },
+      {
+        "from": "geo@gmail.com",
+        "text": "kgjghg"
+      },
+      {
+        "from": "geo@gmail.com",
+        "text": "aaasdfsadf"
+      },
+      {
+        "from": "geo@gmail.com",
+        "text": "dsfsdfsdf"
+      }
+    ],
+    "notifications": [
+      {
+        "text": "Ο καθηγητής ανέβασε νέα σημείωση: Exams_Spring_25.pdf",
+        "for": "geo@gmail.com"
+      },
+      {
+        "text": "Νέο μήνυμα από geo@gmail.com",
+        "for": "prof@gmail.com"
+      },
+      {
+        "text": "Ο καθηγητής ανέβασε νέα ώρα μαθήματος: 2025-08-03 20:00",
+        "for": "geo@gmail.com"
+      },
+      {
+        "text": "Ο/Η geo@gmail.com κράτησε το μάθημα: 2025-08-03 20:00",
+        "for": "prof@gmail.com"
+      }
+    ]
+  }
+]
